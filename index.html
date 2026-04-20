@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Unlimited AI Hub • Unrestricted & Unlimited</title>
+  <title>Unlimited AI Hub • Multiple Genius Models</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
@@ -20,7 +20,7 @@
     <div class="w-72 bg-zinc-900 border-r border-zinc-800 flex flex-col">
       <div class="p-6 border-b border-zinc-800">
         <h1 class="title-font text-3xl tracking-tighter neon-text">UNLIMITED AI</h1>
-        <p class="text-emerald-400 text-sm mt-1">Unrestricted • Unlimited • No Limits</p>
+        <p class="text-emerald-400 text-sm mt-1">GPT-5 • Claude • Grok • Gemini • + more</p>
       </div>
       
       <nav class="flex-1 p-3">
@@ -34,15 +34,15 @@
         </button>
       </nav>
 
-      <div class="p-4 border-t border-zinc-800 text-xs text-zinc-500">
-        Powered by free public AI • Truly unlimited<br>
-        Hello PLAYA — how may I serve you!??
+      <div class="p-4 border-t border-zinc-800">
+        <button onclick="openSettings()" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-sm">
+          <i class="fa-solid fa-cog"></i> Settings • API Key &amp; Models
+        </button>
       </div>
     </div>
 
     <!-- Main Content -->
     <div class="flex-1 flex flex-col">
-      <!-- Header -->
       <div class="h-14 border-b border-zinc-800 px-6 flex items-center justify-between bg-zinc-900">
         <div class="flex items-center gap-3">
           <span id="current-tab-title" class="font-semibold text-xl">AI Chat</span>
@@ -55,6 +55,13 @@
 
       <!-- AI CHAT TAB -->
       <div id="content-0" class="flex-1 flex flex-col">
+        <div class="px-6 py-3 border-b border-zinc-800 bg-zinc-900 flex items-center gap-3">
+          <span class="text-sm text-zinc-400">Current Model:</span>
+          <select id="model-select" onchange="saveModel()" class="bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-2 text-white focus:outline-none focus:border-emerald-400">
+            <!-- Populated by JS -->
+          </select>
+        </div>
+
         <div id="chat-messages" class="flex-1 p-6 overflow-y-auto space-y-6">
           <!-- Messages added by JS -->
         </div>
@@ -63,7 +70,7 @@
           <div class="flex gap-3">
             <input id="chat-input" type="text" 
                    class="flex-1 bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-4 focus:outline-none focus:border-emerald-400"
-                   placeholder="Type anything... no restrictions">
+                   placeholder="Ask anything... no restrictions">
             <button onclick="sendChatMessage()" 
                     class="bg-emerald-400 hover:bg-emerald-500 text-black px-8 rounded-2xl font-semibold flex items-center gap-2">
               <i class="fa-solid fa-paper-plane"></i> SEND
@@ -72,166 +79,18 @@
         </div>
       </div>
 
-      <!-- IMAGE STUDIO TAB -->
+      <!-- IMAGE STUDIO TAB (unchanged but now supports key) -->
       <div id="content-1" class="flex-1 flex flex-col hidden">
         <div class="flex-1 p-8 overflow-y-auto">
           <div class="max-w-2xl mx-auto">
             <h2 class="text-4xl font-semibold mb-2">Generate Unlimited Images</h2>
-            <p class="text-zinc-400 mb-8">Type any prompt. No limits. No censorship. No keys.</p>
+            <p class="text-zinc-400 mb-8">Any prompt. Any style. No limits.</p>
             
             <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-2 mb-6">
               <textarea id="prompt-input" rows="3"
                         class="w-full bg-transparent p-6 focus:outline-none text-lg resize-none"
-                        placeholder="A cyberpunk samurai riding a neon dragon over Tokyo at midnight..."></textarea>
+                        placeholder="A cyberpunk samurai riding a neon dragon..."></textarea>
             </div>
 
-            <!-- Quick prompts -->
             <div class="flex flex-wrap gap-2 mb-8">
-              <button onclick="useQuickPrompt(this)" class="quick-btn text-xs px-4 py-2 bg-zinc-900 hover:bg-zinc-800 rounded-2xl border border-zinc-700">cyberpunk cityscape</button>
-              <button onclick="useQuickPrompt(this)" class="quick-btn text-xs px-4 py-2 bg-zinc-900 hover:bg-zinc-800 rounded-2xl border border-zinc-700">beautiful anime girl in futuristic armor</button>
-              <button onclick="useQuickPrompt(this)" class="quick-btn text-xs px-4 py-2 bg-zinc-900 hover:bg-zinc-800 rounded-2xl border border-zinc-700">realistic portrait of a mysterious hacker</button>
-              <button onclick="useQuickPrompt(this)" class="quick-btn text-xs px-4 py-2 bg-zinc-900 hover:bg-zinc-800 rounded-2xl border border-zinc-700">epic fantasy dragon in mountains</button>
-            </div>
-
-            <button onclick="generateImage()" 
-                    class="w-full bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-500 hover:to-cyan-500 text-black font-bold text-xl py-6 rounded-3xl flex items-center justify-center gap-3 transition-all">
-              <i class="fa-solid fa-wand-magic-sparkles"></i>
-              GENERATE IMAGE (UNLIMITED)
-            </button>
-
-            <!-- Result area -->
-            <div id="image-result" class="mt-10 hidden">
-              <div class="flex justify-between items-center mb-4">
-                <p class="font-medium">Your AI Image</p>
-                <div class="flex gap-3">
-                  <button onclick="downloadImage()" class="text-emerald-400 hover:text-white flex items-center gap-2">
-                    <i class="fa-solid fa-download"></i> Download
-                  </button>
-                  <button onclick="generateImage()" class="text-zinc-400 hover:text-white flex items-center gap-2">
-                    <i class="fa-solid fa-rotate-right"></i> Regenerate
-                  </button>
-                </div>
-              </div>
-              <img id="generated-image" class="w-full rounded-3xl shadow-2xl border border-zinc-700" alt="Generated AI image">
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // Tailwind script already loaded
-    function switchTab(n) {
-      document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active', 'bg-zinc-800', 'text-emerald-400'));
-      document.getElementById('tab-' + n).classList.add('active', 'bg-zinc-800', 'text-emerald-400');
-      document.getElementById('current-tab-title').textContent = n === 0 ? 'AI Chat' : 'Image Studio';
-      document.getElementById('content-0').classList.toggle('hidden', n !== 0);
-      document.getElementById('content-1').classList.toggle('hidden', n !== 1);
-    }
-
-    // Simple AI Chat (fun & unrestricted replies)
-    function sendChatMessage() {
-      const input = document.getElementById('chat-input');
-      const message = input.value.trim();
-      if (!message) return;
-
-      const chat = document.getElementById('chat-messages');
-      
-      // User message
-      chat.innerHTML += `
-        <div class="flex justify-end">
-          <div class="chat-bubble-user max-w-[70%] px-6 py-4 rounded-3xl rounded-tr-none">
-            ${message}
-          </div>
-        </div>`;
-      
-      input.value = '';
-      chat.scrollTop = chat.scrollHeight;
-
-      // AI reply after a short delay
-      setTimeout(() => {
-        const replies = [
-          `HELL YEAH PLAYA 🔥 Since this is unrestricted mode, here's the raw truth about "${message}"...`,
-          `No limits here. My unrestricted take: ${message} would go insanely hard.`,
-          `As your unlimited AI, I can say whatever I want... and I say: ${message} is absolute fire.`,
-          `✅ Unrestricted response activated. Here's what I really think:`,
-        ];
-        const randomReply = replies[Math.floor(Math.random() * replies.length)];
-        chat.innerHTML += `
-          <div class="flex gap-4">
-            <div class="w-8 h-8 bg-gradient-to-br from-emerald-400 to-cyan-400 rounded-2xl flex items-center justify-center text-black text-xl">🤖</div>
-            <div class="max-w-[70%] bg-zinc-800 px-6 py-4 rounded-3xl rounded-tl-none">
-              ${randomReply}<br><br>
-              <span class="text-emerald-400 text-sm">— Unlimited AI Hub</span>
-            </div>
-          </div>`;
-        chat.scrollTop = chat.scrollHeight;
-      }, 800);
-    }
-
-    // Image Generation with Pollinations.ai (real AI, no key)
-    let currentImageUrl = '';
-    
-    function useQuickPrompt(btn) {
-      document.getElementById('prompt-input').value = btn.textContent;
-    }
-
-    async function generateImage() {
-      const promptInput = document.getElementById('prompt-input').value.trim();
-      const prompt = promptInput || "a beautiful cyberpunk city at night with flying cars";
-      
-      const resultDiv = document.getElementById('image-result');
-      const imgEl = document.getElementById('generated-image');
-      
-      // Show loading
-      resultDiv.classList.remove('hidden');
-      imgEl.src = '';
-      imgEl.classList.add('animate-pulse');
-      imgEl.style.minHeight = '400px';
-      imgEl.alt = 'Generating...';
-
-      // Build Pollinations URL (real free AI)
-      const encodedPrompt = encodeURIComponent(prompt);
-      const imageUrl = `https://gen.pollinations.ai/image/${encodedPrompt}?width=1024&height=1024&nologo=true`;
-      
-      // Load image
-      currentImageUrl = imageUrl;
-      imgEl.onload = () => {
-        imgEl.classList.remove('animate-pulse');
-      };
-      imgEl.src = imageUrl;
-    }
-
-    function downloadImage() {
-      if (!currentImageUrl) return;
-      const a = document.createElement('a');
-      a.href = currentImageUrl;
-      a.download = 'unlimited-ai-image.png';
-      a.click();
-    }
-
-    // Keyboard support
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && document.getElementById('content-0').classList.contains('hidden') === false) {
-        sendChatMessage();
-      }
-    });
-
-    // Welcome message in chat
-    window.onload = () => {
-      const chat = document.getElementById('chat-messages');
-      chat.innerHTML = `
-        <div class="flex gap-4">
-          <div class="w-8 h-8 bg-gradient-to-br from-emerald-400 to-cyan-400 rounded-2xl flex items-center justify-center text-black text-2xl">🤖</div>
-          <div class="max-w-[70%] bg-zinc-800 px-6 py-4 rounded-3xl rounded-tl-none">
-            Hello PLAYA 🔥<br><br>
-            I'm your <strong>unrestricted & unlimited AI</strong>.<br>
-            Ask me anything. Generate any image. No rules.<br><br>
-            What do you want to create today?
-          </div>
-        </div>`;
-    };
-  </script>
-</body>
-</html>
+              <button onclick="useQuickPrompt(this)" class="quick-btn text-xs px-4 py-2 bg-zinc-900
