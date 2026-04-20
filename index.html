@@ -20,7 +20,7 @@
     <div class="w-72 bg-zinc-900 border-r border-zinc-800 flex flex-col">
       <div class="p-6 border-b border-zinc-800">
         <h1 class="title-font text-3xl tracking-tighter neon-text">UNLIMITED AI</h1>
-        <p class="text-emerald-400 text-sm mt-1">GPT-5 • Claude • Grok • Gemini • + more</p>
+        <p class="text-emerald-400 text-sm mt-1">GPT-4o • Claude 3.5 • Grok • Gemini • + more</p>
       </div>
       
       <nav class="flex-1 p-3">
@@ -36,7 +36,7 @@
 
       <div class="p-4 border-t border-zinc-800">
         <button onclick="openSettings()" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-sm">
-          <i class="fa-solid fa-cog"></i> Settings • API Key &amp; Models
+          <i class="fa-solid fa-cog"></i> Settings • API Key
         </button>
       </div>
     </div>
@@ -49,28 +49,26 @@
         </div>
         <div class="flex items-center gap-2 text-emerald-400">
           <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-          UNRESTRICTED MODE
+          UNRESTRICTED
         </div>
       </div>
 
       <!-- AI CHAT TAB -->
       <div id="content-0" class="flex-1 flex flex-col">
         <div class="px-6 py-3 border-b border-zinc-800 bg-zinc-900 flex items-center gap-3">
-          <span class="text-sm text-zinc-400">Current Model:</span>
+          <span class="text-sm text-zinc-400">Model:</span>
           <select id="model-select" onchange="saveModel()" class="bg-zinc-800 border border-zinc-700 rounded-2xl px-4 py-2 text-white focus:outline-none focus:border-emerald-400">
             <!-- Populated by JS -->
           </select>
         </div>
 
-        <div id="chat-messages" class="flex-1 p-6 overflow-y-auto space-y-6">
-          <!-- Messages added by JS -->
-        </div>
+        <div id="chat-messages" class="flex-1 p-6 overflow-y-auto space-y-6"></div>
         
         <div class="p-4 border-t border-zinc-800 bg-zinc-900">
           <div class="flex gap-3">
             <input id="chat-input" type="text" 
                    class="flex-1 bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-4 focus:outline-none focus:border-emerald-400"
-                   placeholder="Ask anything... no restrictions">
+                   placeholder="Ask anything...">
             <button onclick="sendChatMessage()" 
                     class="bg-emerald-400 hover:bg-emerald-500 text-black px-8 rounded-2xl font-semibold flex items-center gap-2">
               <i class="fa-solid fa-paper-plane"></i> SEND
@@ -79,18 +77,94 @@
         </div>
       </div>
 
-      <!-- IMAGE STUDIO TAB (unchanged but now supports key) -->
+      <!-- IMAGE STUDIO TAB -->
       <div id="content-1" class="flex-1 flex flex-col hidden">
         <div class="flex-1 p-8 overflow-y-auto">
           <div class="max-w-2xl mx-auto">
-            <h2 class="text-4xl font-semibold mb-2">Generate Unlimited Images</h2>
-            <p class="text-zinc-400 mb-8">Any prompt. Any style. No limits.</p>
+            <h2 class="text-4xl font-semibold mb-2">Unlimited Images</h2>
+            <p class="text-zinc-400 mb-8">Any prompt • No limits</p>
             
-            <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-2 mb-6">
-              <textarea id="prompt-input" rows="3"
-                        class="w-full bg-transparent p-6 focus:outline-none text-lg resize-none"
-                        placeholder="A cyberpunk samurai riding a neon dragon..."></textarea>
+            <textarea id="prompt-input" rows="3" class="w-full bg-zinc-900 border border-zinc-700 rounded-3xl p-6 focus:outline-none text-lg resize-none" placeholder="Describe any image..."></textarea>
+
+            <div class="flex flex-wrap gap-2 my-6">
+              <button onclick="useQuickPrompt(this)" class="quick-btn text-xs px-4 py-2 bg-zinc-900 hover:bg-zinc-800 rounded-2xl border border-zinc-700">cyberpunk city at night</button>
+              <button onclick="useQuickPrompt(this)" class="quick-btn text-xs px-4 py-2 bg-zinc-900 hover:bg-zinc-800 rounded-2xl border border-zinc-700">beautiful anime warrior</button>
+              <button onclick="useQuickPrompt(this)" class="quick-btn text-xs px-4 py-2 bg-zinc-900 hover:bg-zinc-800 rounded-2xl border border-zinc-700">realistic hacker portrait</button>
+              <button onclick="useQuickPrompt(this)" class="quick-btn text-xs px-4 py-2 bg-zinc-900 hover:bg-zinc-800 rounded-2xl border border-zinc-700">fantasy dragon mountain</button>
             </div>
 
-            <div class="flex flex-wrap gap-2 mb-8">
-              <button onclick="useQuickPrompt(this)" class="quick-btn text-xs px-4 py-2 bg-zinc-900
+            <button onclick="generateImage()" 
+                    class="w-full bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-500 hover:to-cyan-500 text-black font-bold text-xl py-6 rounded-3xl flex items-center justify-center gap-3">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+              GENERATE IMAGE
+            </button>
+
+            <div id="image-result" class="mt-10 hidden">
+              <div class="flex justify-between mb-4">
+                <p class="font-medium">Generated Image</p>
+                <div>
+                  <button onclick="downloadImage()" class="text-emerald-400 hover:text-white mr-4"><i class="fa-solid fa-download"></i> Download</button>
+                  <button onclick="generateImage()" class="text-zinc-400 hover:text-white"><i class="fa-solid fa-rotate-right"></i> Regenerate</button>
+                </div>
+              </div>
+              <img id="generated-image" class="w-full rounded-3xl border border-zinc-700" alt="">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" onclick="if(event.target===this)closeSettings()" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+    <div class="bg-zinc-900 rounded-3xl p-8 max-w-md w-full mx-4">
+      <h2 class="text-2xl font-semibold mb-6">Free API Key (required for chat)</h2>
+      <p class="text-zinc-400 mb-4">Get it in 20 seconds → <a href="https://enter.pollinations.ai" target="_blank" class="text-emerald-400 underline">enter.pollinations.ai</a></p>
+      <input id="api-key-input" type="password" class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-4 mb-6 focus:outline-none focus:border-emerald-400" placeholder="pk_...">
+      <div class="flex gap-3">
+        <button onclick="saveApiKey()" class="flex-1 bg-emerald-400 text-black font-semibold py-4 rounded-2xl">Save Key</button>
+        <button onclick="closeSettings()" class="flex-1 border border-zinc-700 hover:bg-zinc-800 font-semibold py-4 rounded-2xl">Cancel</button>
+      </div>
+      <p id="key-status" class="text-xs mt-4 text-emerald-400"></p>
+    </div>
+  </div>
+
+  <script>
+    let apiKey = localStorage.getItem('pollinationsKey') || '';
+    let currentModel = localStorage.getItem('selectedModel') || 'gpt-4o';
+    let messages = [];
+
+    const modelOptions = [
+      { name: "GPT-4o (best all-rounder)", id: "gpt-4o" },
+      { name: "Claude 3.5 Sonnet", id: "claude-3-5-sonnet" },
+      { name: "Grok-2", id: "grok-2" },
+      { name: "Gemini 1.5 Pro", id: "gemini-1.5-pro" },
+      { name: "GPT-4o Mini (fast)", id: "gpt-4o-mini" },
+      { name: "DeepSeek R1", id: "deepseek-r1" }
+    ];
+
+    function populateModels() {
+      const select = document.getElementById('model-select');
+      select.innerHTML = '';
+      modelOptions.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = m.name;
+        if (m.id === currentModel) opt.selected = true;
+        select.appendChild(opt);
+      });
+    }
+
+    function saveModel() {
+      currentModel = document.getElementById('model-select').value;
+      localStorage.setItem('selectedModel', currentModel);
+    }
+
+    function openSettings() {
+      document.getElementById('api-key-input').value = apiKey;
+      document.getElementById('key-status').textContent = apiKey ? '✅ Key saved and active' : '⚠️ No key yet (chat will show instructions)';
+      document.getElementById('settings-modal').classList.remove('hidden');
+    }
+
+    function closeSettings() {
+      document.getElementById('settings-modal').classList.add('hidden
