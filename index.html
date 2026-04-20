@@ -66,11 +66,11 @@
     </div>
   </div>
 
-  <!-- Simple Settings -->
+  <!-- Settings Modal -->
   <div id="modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center">
     <div class="bg-zinc-900 rounded-3xl p-8 max-w-sm w-full mx-4">
       <h3 class="text-xl font-semibold mb-4">Free API Key</h3>
-      <p class="text-zinc-400 text-sm mb-4">Get it free at <a href="https://enter.pollinations.ai" target="_blank" class="text-emerald-400 underline">enter.pollinations.ai</a></p>
+      <p class="text-zinc-400 text-sm mb-4">Paste the key you just created (pk_...)</p>
       <input id="key-input" type="password" placeholder="pk_xxxxxxxxxxxxxxxx" 
              class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-3 mb-6">
       <div class="flex gap-3">
@@ -96,17 +96,14 @@
       apiKey = document.getElementById("key-input").value.trim();
       localStorage.setItem("aiKey", apiKey);
       closeModal();
-      addMessage("system", "✅ API key saved! You can now chat with real models.");
+      addMessage("system", "✅ API key saved! Chat is now fully unlocked.");
     }
 
     function addMessage(sender, text) {
       const chat = document.getElementById("chat");
       const div = document.createElement("div");
       div.className = sender === "user" ? "text-right" : "text-left";
-      div.innerHTML = `
-        <div class="${sender === "user" ? "bg-emerald-500 text-black ml-auto" : "bg-zinc-800"} inline-block max-w-[80%] px-4 py-3 rounded-2xl">
-          ${text}
-        </div>`;
+      div.innerHTML = `<div class="${sender === "user" ? "bg-emerald-500 text-black ml-auto" : "bg-zinc-800"} inline-block max-w-[80%] px-4 py-3 rounded-2xl">${text}</div>`;
       chat.appendChild(div);
       chat.scrollTop = chat.scrollHeight;
     }
@@ -115,12 +112,11 @@
       const input = document.getElementById("chat-input");
       const text = input.value.trim();
       if (!text) return;
-
       addMessage("user", text);
       input.value = "";
 
       if (!apiKey) {
-        addMessage("system", "⚠️ Please add your free API key in settings first.");
+        addMessage("system", "⚠️ Paste your free API key in settings first.");
         return;
       }
 
@@ -129,22 +125,49 @@
       try {
         const res = await fetch("https://gen.pollinations.ai/v1/chat/completions", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            model: "gpt-4o",
-            messages: [{ role: "user", content: text }],
-            temperature: 0.8
-          })
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+          body: JSON.stringify({ model: "gpt-4o", messages: [{ role: "user", content: text }], temperature: 0.8 })
         });
-
         const data = await res.json();
-        const reply = data.choices?.[0]?.message?.content || "Sorry, I couldn't get a response.";
-        
-        // Remove "Thinking..." and add real reply
+        const reply = data.choices?.[0]?.message?.content || "No response";
         const chat = document.getElementById("chat");
         chat.removeChild(chat.lastChild);
         addMessage("ai", reply);
-      } catch (e
+      } catch (e) {
+        const chat = document.getElementById("chat");
+        chat.removeChild(chat.lastChild);
+        addMessage("system", "❌ Error — make sure your key is correct.");
+      }
+    }
+
+    let currentImgUrl = "";
+    function quickPrompt(text) { document.getElementById("prompt").value = text; }
+
+    async function generateImage() {
+      let prompt = document.getElementById("prompt").value.trim() || "beautiful cyberpunk city at night";
+      const area = document.getElementById("image-area");
+      const img = document.getElementById("generated-img");
+      area.classList.remove("hidden");
+      img.src = "";
+
+      let url = `https://gen.pollinations.ai/image/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true`;
+      if (apiKey) url += `&key=${encodeURIComponent(apiKey)}`;
+
+      currentImgUrl = url;
+      img.src = url;
+    }
+
+    function downloadImg() {
+      if (!currentImgUrl) return;
+      const a = document.createElement("a");
+      a.href = currentImgUrl;
+      a.download = "ai-image.png";
+      a.click();
+    }
+
+    window.onload = () => {
+      addMessage("ai", "Hello PLAYA! 🔥<br><br>Get your free key from enter.pollinations.ai, paste it in settings, then chat or generate images.");
+    };
+  </script>
+</body>
+</html>
