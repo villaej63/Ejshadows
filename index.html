@@ -9,6 +9,24 @@
   <style>
     body { font-family: system-ui, sans-serif; }
     .neon { text-shadow: 0 0 15px #10b981; }
+    .error-state {
+      background-color: rgba(239, 68, 68, 0.1);
+      border-color: #ef4444;
+    }
+    .loading {
+      opacity: 0.7;
+      position: relative;
+    }
+    .loading::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.3) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cpath fill='%23fff' d='M20 2.5A17.5 17.5 0 1 1 2.5 20' stroke='%23fff' stroke-width='3' fill='none' stroke-linecap='round' stroke-dasharray='60 100' stroke-dashoffset='0'%3E%3CanimateTransform attributeName='transform' type='rotate' from='0 20 20' to='360 20 20' dur='1s' repeatCount='indefinite'/%3E%3C/path%3E%3C/svg%3E") center no-repeat;
+      border-radius: 0.5rem;
+    }
   </style>
 </head>
 <body class="bg-zinc-950 text-white min-h-screen">
@@ -55,81 +73,76 @@
         </button>
 
         <div id="image-area" class="mt-6 hidden">
-          <img id="generated-img" class="w-full rounded-2xl border border-zinc-700" alt="Generated image">
-          <div class="flex gap-4 mt-4">
-            <button onclick="downloadImg()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 py-3 rounded-2xl">Download</button>
-            <button onclick="generateImage()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 py-3 rounded-2xl">Regenerate</button>
+          <div id="image-container" class="relative">
+            <img id="generated-img" class="w-full rounded-2xl border border-zinc-700" alt="Generated image">
+            <div id="image-loading" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-2xl hidden">
+              <div class="text-center">
+                <i class="fa-solid fa-spinner fa-spin text-3xl mb-2"></i>
+                <p>Generating image...</p>
+              </div>
+            </div>
           </div>
+          <div class="flex gap-4 mt-4">
+            <button onclick="downloadImg()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 py-3 rounded-2xl flex items-center justify-center gap-2">
+              <i class="fa-solid fa-download"></i> Download
+            </button>
+            <button onclick="generateImage()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 py-3 rounded-2xl flex items-center justify-center gap-2">
+              <i class="fa-solid fa-refresh"></i> Regenerate
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="mt-8 bg-zinc-900 border border-zinc-700 rounded-2xl p-4">
+      <div class="flex justify-between items-center">
+        <div id="status" class="text-sm text-zinc-400">
+          <i class="fa-solid fa-circle text-green-500 text-xs mr-1"></i> All systems operational
+        </div>
+        <div class="text-xs text-zinc-500">
+          Free AI Hub v2.0 | No API Keys Required
         </div>
       </div>
     </div>
   </div>
 
   <script>
+    let currentImgUrl = "";
+    let isGeneratingImage = false;
+    
+    function updateStatus(message, isError = false) {
+      const status = document.getElementById("status");
+      status.innerHTML = `<i class="fa-solid fa-circle \${isError ? 'text-red-500' : 'text-green-500'} text-xs mr-1"></i> ${message}`;
+    }
+    
     function addMessage(sender, text) {
       const chat = document.getElementById("chat");
       const div = document.createElement("div");
       div.className = sender === "user" ? "text-right" : "text-left";
-      div.innerHTML = `<div class="${sender === "user" ? "bg-emerald-500 text-black ml-auto" : "bg-zinc-800"} inline-block max-w-[80%] px-4 py-3 rounded-2xl">${text}</div>`;
+      
+      // Handle multi-line responses better
+      const formattedText = text.replace(/\n/g, "<br>");
+      div.innerHTML = `<div class="${sender === "user" ? "bg-emerald-500 text-black ml-auto" : "bg-zinc-800"} inline-block max-w-[80%] px-4 py-3 rounded-2xl">\${formattedText}</div>`;
       chat.appendChild(div);
       chat.scrollTop = chat.scrollHeight;
     }
 
+    function addTypingIndicator() {
+      const chat = document.getElementById("chat");
+      const div = document.createElement("div");
+      div.className = "text-left";
+      div.id = "typing-indicator";
+      div.innerHTML = `<div class="bg-zinc-800 inline-block max-w-[80%] px-4 py-3 rounded-2xl"><i class="fa-solid fa-spinner fa-spin"></i> Thinking...</div>`;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function removeTypingIndicator() {
+      const indicator = document.getElementById("typing-indicator");
+      if (indicator) indicator.remove();
+    }
+
     async function sendMessage() {
       const input = document.getElementById("chat-input");
-      const text = input.value.trim();
-      if (!text) return;
-      
-      addMessage("user", text);
-      input.value = "";
-
-      addMessage("ai", "Thinking in free mode...");
-
-      try {
-        // Free text endpoint fallback
-        const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(text)}`);
-        const reply = await res.text();
-        
-        const chat = document.getElementById("chat");
-        chat.removeChild(chat.lastChild);
-        addMessage("ai", reply || "Free mode response received! (Try more creative prompts if short)");
-      } catch (e) {
-        const chat = document.getElementById("chat");
-        chat.removeChild(chat.lastChild);
-        addMessage("ai", "Free chat hit a limit or is slow right now.<br><br>Try a different prompt or come back later — images still work great!");
-      }
-    }
-
-    let currentImgUrl = "";
-    function quickPrompt(text) { 
-      document.getElementById("prompt").value = text; 
-    }
-
-    async function generateImage() {
-      let prompt = document.getElementById("prompt").value.trim() || "beautiful cyberpunk city at night";
-      const area = document.getElementById("image-area");
-      const img = document.getElementById("generated-img");
-      area.classList.remove("hidden");
-      img.src = "";
-
-      // Public no-key image endpoint
-      const url = `https://gen.pollinations.ai/image/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&model=flux`;
-      
-      currentImgUrl = url;
-      img.src = url;
-    }
-
-    function downloadImg() {
-      if (!currentImgUrl) return;
-      const a = document.createElement("a");
-      a.href = currentImgUrl;
-      a.download = "free-ai-image.png";
-      a.click();
-    }
-
-    window.onload = () => {
-      addMessage("ai", "Hello PLAYA! 🔥<br><br>Free Forever mode activated.<br>No API key needed.<br>Images should generate instantly.<br>Chat is best-effort free public mode.<br>Ask me anything!");
-    };
-  </script>
-</body>
-</html>
+      const text
