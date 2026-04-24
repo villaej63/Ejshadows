@@ -2,28 +2,31 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>AI System</title>
+<title>AI Pro</title>
 
 <style>
-body { font-family: Arial; background:#0f0f0f; color:white; text-align:center; }
-#chat { height:55vh; overflow:auto; border:1px solid #333; padding:10px; margin-bottom:10px; }
-.user { color:#4fc3f7; }
-.ai { color:#81c784; }
-img { max-width:100%; margin-top:10px; border-radius:10px; }
-button { padding:10px; margin:5px; }
+body { background:#0b0b0b; color:white; font-family:Arial; margin:0; }
+.container { max-width:600px; margin:auto; padding:10px; }
+#chat { height:70vh; overflow:auto; border:1px solid #333; padding:10px; border-radius:10px; }
+.user { color:#4fc3f7; margin:8px 0; }
+.ai { color:#81c784; margin:8px 0; }
 input { width:70%; padding:10px; }
+button { padding:10px; margin:5px; }
+img { width:100%; border-radius:10px; margin-top:10px; }
 </style>
 </head>
 
 <body>
 
-<h2>⚡ My AI System</h2>
+<div class="container">
+<h2>⚡ AI Pro Assistant</h2>
 
 <div id="chat"></div>
 
-<input id="msg" placeholder="Ask or type image:cat in space" />
+<input id="msg" placeholder="Ask or type image:..." />
 <button onclick="send()">Send</button>
-<button onclick="genImage()">Image</button>
+<button onclick="image()">Image</button>
+</div>
 
 <script>
 
@@ -51,13 +54,12 @@ async function send() {
   add("AI: " + data.reply, "ai");
 }
 
-async function genImage() {
+async function image() {
   const input = document.getElementById("msg");
   const prompt = input.value;
-
   input.value = "";
 
-  add("🎨 Generating image: " + prompt, "ai");
+  add("🎨 Creating image: " + prompt, "ai");
 
   const res = await fetch("/api/image", {
     method: "POST",
