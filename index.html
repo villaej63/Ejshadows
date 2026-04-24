@@ -1,312 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My AI</title>
+  <style>
+    body { font-family: Arial; background:#111; color:#fff; margin:0; }
+    .wrap { max-width:600px; margin:auto; padding:10px; }
+    #chat { height:70vh; overflow:auto; border:1px solid #333; padding:10px; }
+    .user { color:#4fc3f7; margin:8px 0; }
+    .ai { color:#81c784; margin:8px 0; }
+    input { width:75%; padding:10px; }
+    button { padding:10px; }
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+  <h2>⚡ My AI Assistant</h2>
+
+  <div id="chat"></div>
+
+  <input id="msg" placeholder="Ask something..." />
+  <button onclick="send()">Send</button>
+</div>
+
 <script>
-/* THEME */
-const rootHtml = document.documentElement;
-const themeToggle = document.getElementById("themeToggle");
+async function send() {
+  const input = document.getElementById("msg");
+  const chat = document.getElementById("chat");
 
-function setTheme(theme) {
-  rootHtml.setAttribute("data-theme", theme);
-  localStorage.setItem("aihub-theme", theme);
-  const icon = themeToggle.querySelector("i");
-  const label = themeToggle.querySelector("span");
-  if (theme === "dark") {
-    icon.className = "fa-solid fa-moon";
-    label.textContent = "Dark mode";
-  } else {
-    icon.className = "fa-solid fa-sun";
-    label.textContent = "Light mode";
-  }
-}
+  const text = input.value;
+  input.value = "";
 
-(function initTheme() {
-  const stored = localStorage.getItem("aihub-theme");
-  setTheme(stored || "dark");
-})();
+  chat.innerHTML += `<div class="user">You: ${text}</div>`;
 
-themeToggle.addEventListener("click", () => {
-  const current = rootHtml.getAttribute("data-theme") === "dark" ? "light" : "dark";
-  setTheme(current);
-});
-
-/* API KEY */
-const apiKeyInput = document.getElementById("apiKey");
-const saveKeyBtn = document.getElementById("saveKeyBtn");
-const clearKeyBtn = document.getElementById("clearKeyBtn");
-
-function loadKey() {
-  const k = localStorage.getItem("aihub-openai-key") || "";
-  if (k) apiKeyInput.value = k;
-  return k;
-}
-function getKey() {
-  const key = apiKeyInput.value.trim();
-  if (!key) alert("Enter your OpenAI API key first.");
-  return key;
-}
-
-loadKey();
-
-saveKeyBtn.addEventListener("click", () => {
-  const key = apiKeyInput.value.trim();
-  if (!key) {
-    alert("Nothing to save.");
-    return;
-  }
-  localStorage.setItem("aihub-openai-key", key);
-  alert("API key saved in this browser.");
-});
-
-clearKeyBtn.addEventListener("click", () => {
-  localStorage.removeItem("aihub-openai-key");
-  apiKeyInput.value = "";
-  alert("API key cleared from this browser.");
-});
-
-/* CHAT */
-const chatBox = document.getElementById("chatBox");
-const chatInput = document.getElementById("chatInput");
-const chatSendBtn = document.getElementById("chatSendBtn");
-const clearChatBtn = document.getElementById("clearChatBtn");
-
-let chatHistory = [];
-
-function renderChat() {
-  chatBox.innerHTML = "";
-  if (chatHistory.length === 0) {
-    chatBox.innerHTML = `
-      <div class="text-xs text-slate-400 flex items-center gap-2">
-        <i class="fa-solid fa-circle-info"></i>
-        Start a conversation. Your last session is saved locally.
-      </div>`;
-    return;
-  }
-  chatHistory.forEach(msg => {
-    const wrapper = document.createElement("div");
-    wrapper.className = "flex gap-2";
-    const bubble = document.createElement("div");
-    bubble.className =
-      "px-3 py-2 rounded-2xl max-w-[85%] text-sm " +
-      (msg.role === "user"
-        ? "bg-indigo-600/80 text-white ml-auto"
-        : "bg-black/40 border border-white/10 text-slate-100");
-    bubble.innerHTML = `<span class="block text-[11px] uppercase tracking-wide mb-0.5 ${
-      msg.role === "user" ? "text-indigo-200" : "text-slate-400"
-    }">${msg.role === "user" ? "You" : "AI"}</span>${msg.content}`;
-    wrapper.appendChild(bubble);
-    chatBox.appendChild(wrapper);
+  const res = await fetch("/api/chat", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({ message: text })
   });
-  chatBox.scrollTop = chatBox.scrollHeight;
+
+  const data = await res.json();
+
+  chat.innerHTML += `<div class="ai">AI: ${data.reply}</div>`;
+  chat.scrollTop = chat.scrollHeight;
 }
-
-function loadChatHistory() {
-  try {
-    const stored = localStorage.getItem("aihub-chat-history");
-    chatHistory = stored ? JSON.parse(stored) : [];
-  } catch {
-    chatHistory = [];
-  }
-  renderChat();
-}
-
-function saveChatHistory() {
-  localStorage.setItem("aihub-chat-history", JSON.stringify(chatHistory));
-}
-
-loadChatHistory();
-
-async function sendChat() {
-  const key = getKey();
-  if (!key) return;
-
-  const userMsg = chatInput.value.trim();
-  if (!userMsg) return;
-
-  chatHistory.push({ role: "user", content: userMsg });
-  renderChat();
-  saveChatHistory();
-  chatInput.value = "";
-
-  const typingId = "typing-" + Date.now();
-  const typingDiv = document.createElement("div");
-  typingDiv.id = typingId;
-  typingDiv.className = "flex gap-2 mt-1";
-  typingDiv.innerHTML = `
-    <div class="px-3 py-2 rounded-2xl bg-black/40 border border-white/10 text-xs text-slate-300 flex items-center gap-2">
-      <span class="inline-flex h-1.5 w-1.5 rounded-full bg-slate-400 animate-pulse"></span>
-      <span>AI is thinking...</span>
-    </div>`;
-  chatBox.appendChild(typingDiv);
-  chatBox.scrollTop = chatBox.scrollHeight;
-
-  try {
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + key
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: chatHistory.map(m => ({ role: m.role, content: m.content }))
-      })
-    });
-
-    const data = await res.json();
-    const reply = data?.choices?.[0]?.message?.content || "Something went wrong.";
-
-    chatHistory.push({ role: "assistant", content: reply });
-    saveChatHistory();
-  } catch (err) {
-    chatHistory.push({
-      role: "assistant",
-      content: "Error talking to OpenAI. Check your key and network."
-    });
-  } finally {
-    const t = document.getElementById(typingId);
-    if (t) t.remove();
-    renderChat();
-  }
-}
-
-chatSendBtn.addEventListener("click", sendChat);
-chatInput.addEventListener("keydown", e => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    sendChat();
-  }
-});
-
-clearChatBtn.addEventListener("click", () => {
-  if (!confirm("Clear chat history from this browser?")) return;
-  chatHistory = [];
-  saveChatHistory();
-  renderChat();
-});
-
-/* IMAGES */
-const imgPrompt = document.getElementById("imgPrompt");
-const imgGenerateBtn = document.getElementById("imgGenerateBtn");
-const imageResult = document.getElementById("imageResult");
-const galleryGrid = document.getElementById("galleryGrid");
-const clearGalleryBtn = document.getElementById("clearGalleryBtn");
-
-let gallery = [];
-
-function loadGallery() {
-  try {
-    const stored = localStorage.getItem("aihub-gallery");
-    gallery = stored ? JSON.parse(stored) : [];
-  } catch {
-    gallery = [];
-  }
-  renderGallery();
-}
-
-function saveGallery() {
-  localStorage.setItem("aihub-gallery", JSON.stringify(gallery));
-}
-
-function renderGallery() {
-  galleryGrid.innerHTML = "";
-  if (gallery.length === 0) {
-    galleryGrid.innerHTML = `
-      <div class="col-span-full text-xs text-slate-400 flex items-center gap-2">
-        <i class="fa-solid fa-circle-info"></i>
-        No images yet. Generate something and it will appear here.
-      </div>`;
-    return;
-  }
-
-  gallery.slice().reverse().forEach(item => {
-    const card = document.createElement("button");
-    card.className =
-      "relative group rounded-xl overflow-hidden border border-white/10 bg-black/30 hover:border-emerald-400/70 transition";
-    card.innerHTML = `
-      <img src="${item.url}" class="w-full h-28 object-cover">
-      <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-end">
-        <div class="p-2 text-[10px] text-slate-200 line-clamp-3 text-left">
-          ${item.prompt}
-        </div>
-      </div>`;
-    card.addEventListener("click", () => {
-      imageResult.innerHTML = `
-        <div class="space-y-2">
-          <img src="${item.url}" class="w-full rounded-xl border border-white/10">
-          <p class="text-xs text-slate-300"><span class="font-semibold">Prompt:</span> ${item.prompt}</p>
-        </div>`;
-    });
-    galleryGrid.appendChild(card);
-  });
-}
-
-loadGallery();
-
-async function generateImage() {
-  const key = getKey();
-  if (!key) return;
-
-  const prompt = imgPrompt.value.trim();
-  if (!prompt) return;
-
-  imageResult.innerHTML = `
-    <div class="flex items-center gap-2 text-xs text-slate-300">
-      <span class="inline-flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-      Generating image...
-    </div>`;
-
-  try {
-    const res = await fetch("https://api.openai.com/v1/images/generations", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + key
-      },
-      body: JSON.stringify({
-        model: "gpt-image-1",
-        prompt,
-        size: "1024x1024"
-      })
-    });
-
-    const data = await res.json();
-    const img = data?.data?.[0]?.url;
-
-    if (img) {
-      imageResult.innerHTML = `
-        <div class="space-y-2">
-          <img src="${img}" class="w-full rounded-xl border border-white/10">
-          <p class="text-xs text-slate-300"><span class="font-semibold">Prompt:</span> ${prompt}</p>
-        </div>`;
-
-      gallery.push({ url: img, prompt, createdAt: Date.now() });
-      saveGallery();
-      renderGallery();
-    } else {
-      imageResult.innerHTML = `
-        <div class="text-xs text-rose-400">
-          Image generation failed. Check your key, billing, or model access.
-        </div>`;
-    }
-  } catch (err) {
-    imageResult.innerHTML = `
-      <div class="text-xs text-rose-400">
-        Error talking to OpenAI. Check your key and network.
-      </div>`;
-  }
-}
-
-imgGenerateBtn.addEventListener("click", generateImage);
-imgPrompt.addEventListener("keydown", e => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    generateImage();
-  }
-});
-
-clearGalleryBtn.addEventListener("click", () => {
-  if (!confirm("Clear all generated images from this browser?")) return;
-  gallery = [];
-  saveGallery();
-  renderGallery();
-  imageResult.innerHTML = "";
-});
 </script>
+
+</body>
+</html>
